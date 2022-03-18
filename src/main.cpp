@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 int COM,counter;
+int state_jam_temp;
 int clock[6] = {0,0,0,0,0,0};
 
 /*
@@ -55,30 +56,35 @@ void setup(){
 }
 
 void loop(){
+  if (state_jam_temp==1){
+    if (COM==13){
+      COM = 12;
+    }
+    else if (COM==12){
+      COM = 11;
+    }
+    else if (COM==11){
+      COM = 10;
+    }
+    else if (COM==10){
+      COM = 13;
+    }
+
+    display_clock();
+    counter++;
+
+    if (counter==100){
+      setting_clock();
+      counter = 0;
+    }
+    
+    state_jam_temp=0;
+  }
 }
 
 //Fungsi Interrupt setiap 10ms
 ISR(TIMER2_COMPA_vect){
-  if (COM==13){
-    COM = 12;
-  }
-  else if (COM==12){
-    COM = 11;
-  }
-  else if (COM==11){
-    COM = 10;
-  }
-  else if (COM==10){
-    COM = 13;
-  }
-
-  display_clock();
-  counter++;
-
-  if (counter==100){
-    setting_clock();
-    counter = 0;
-  }
+  state_jam = 1;
   TCNT1 = 0; 
 }
 

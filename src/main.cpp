@@ -204,6 +204,8 @@ void setting_clock(){
     clock[1] = 0;
     clock[2] = 0;
     clock[3] = 0;
+    clock[4] = 0;
+    clock[5] = 0;
   }
 
   //Jika jam menunjukkan XX:59:59
@@ -218,7 +220,9 @@ void setting_clock(){
       clock[1]++;
     }
     clock[2] = 0;
-    clock[3] = 0; 
+    clock[3] = 0;
+    clock[4] = 0;
+    clock[5] = 0;
   }
 
   //Jika jam XX:XX:59

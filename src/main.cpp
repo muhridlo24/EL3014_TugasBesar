@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
-int COM,counter;
-int state_jam_temp;
+int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
 
 /*
@@ -25,17 +24,25 @@ int clock[6] = {0,0,0,0,0,0};
 
 
 void setup(){
-  for (int i=2;i<10;i++){
-    pinMode(i,INPUT_PULLUP);
-  }
+  pinMode(2,OUTPUT);
+  pinMode(3,OUTPUT);
+  pinMode(4,OUTPUT);
+  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
+  pinMode(7,OUTPUT);
+  pinMode(8,OUTPUT);
+  pinMode(9,OUTPUT);
+  pinMode(10,OUTPUT);
+  pinMode(11,OUTPUT);
+  pinMode(12,OUTPUT);
+  pinMode(13,OUTPUT);
+  pinMode(14,OUTPUT);
+  pinMode(15,OUTPUT);
+  pinMode(16,OUTPUT);
+  pinMode(17,OUTPUT);
 
-  for (int i=10;i<=13;i++){
-    pinMode(i,OUTPUT);
-  }
 
-  digitalWrite(2,HIGH);
   Serial.begin(9600);
-
 
   //TImer yang digunakan: TIMER 2 dengan Prescaler 1024
   cli();
@@ -44,162 +51,148 @@ void setup(){
   TCCR2B = 0;
 
   //Set Register untuk Timer 2 Prescaler 1024
-  TCCR2B |= B00000101;
+  TCCR2A |= B00000010;
+  TCCR2B |= B10000111;
+  OCR2A=125;
     //Set register untuk mengaktifkan COMPARE
-  TIMSK1 |= B00000010;
-  OCR1A=625;
-
-  //Set Register untuk Timer 10ms Seven Segment
-  TCCR2B |= B00000000;
+  TIMSK2 |= (1 << OCIE2A);
 
   sei();
-}
-
-void loop(){
-  if (state_jam_temp==1){
-    if (COM==13){
-      COM = 12;
-    }
-    else if (COM==12){
-      COM = 11;
-    }
-    else if (COM==11){
-      COM = 10;
-    }
-    else if (COM==10){
-      COM = 13;
-    }
-
-    display_clock();
-    counter++;
-
-    if (counter==100){
-      setting_clock();
-      counter = 0;
-    }
-    
-    state_jam_temp=0;
-  }
-}
-
-//Fungsi Interrupt setiap 10ms
-ISR(TIMER2_COMPA_vect){
-  state_jam = 1;
-  TCNT1 = 0; 
-}
-
-//Fungsi penampilan Jam, yang nanti dioper ke fungsi mux()
-void display_clock(){
-  digitalWrite(COM,HIGH);
-
-  if (COM==13){
-    mux(clock[0]);
-  }
-
-  else if (COM==12){
-    mux(clock[1]);
-  }
-  else if (COM==11){
-    mux(clock[2]);
-  }
-  else if (COM==10){
-    mux(clock[3]);
-  }
+  Serial.print("OCR2A: "); 
+  Serial.println(OCR2A, HEX);
+  Serial.print("TCCR2A: "); 
+  Serial.println(TCCR2A, HEX);
+  Serial.print("TCCR2B: ");
+  Serial.println(TCCR2B, HEX);
+  Serial.print("TIMSK2: "); 
+  Serial.println(TIMSK2, HEX);
+  Serial.println("TIMER2 Setup Finished.");
 }
 
 //fungsi Multiplexer 1 digit sevent segment untuk nentuin segment mana aja yg nyala
 void mux(int clock_1){
-    switch (clock_1){
-      case 0:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-      
-      case 1:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-      
-      case 2:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-      
-      case 3:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-      
-      case 4:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-      
-      case 5:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-      
-      case 6:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-
-      case 7:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-
-      case 8:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
-
-      case 9:
-        digitalWrite(2,LOW);
-        digitalWrite(3,LOW);
-        digitalWrite(4,LOW);
-        digitalWrite(5,LOW);
-        digitalWrite(6,LOW);
-        digitalWrite(7,LOW);
-        digitalWrite(8,LOW);
+    if (clock_1==0){
+      digitalWrite(2,LOW);
+      digitalWrite(3,LOW);
+      digitalWrite(4,LOW);
+      digitalWrite(5,HIGH);
+      digitalWrite(6,LOW);
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+    }      
+    else if (clock_1==1){
+      digitalWrite(2,HIGH);
+      digitalWrite(3,HIGH);
+      digitalWrite(4,LOW);
+      digitalWrite(5,HIGH);
+      digitalWrite(6,HIGH);
+      digitalWrite(7,HIGH);
+      digitalWrite(8,LOW);
+    }      
+    else if (clock_1==2){
+      digitalWrite(2,LOW);
+      digitalWrite(3,LOW);
+      digitalWrite(4,HIGH);
+      digitalWrite(5,LOW);
+      digitalWrite(6,HIGH);
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
     }
+    else if (clock_1==3){
+      digitalWrite(2,HIGH);
+      digitalWrite(3,LOW);
+      digitalWrite(4,LOW);
+      digitalWrite(5,LOW);
+      digitalWrite(6,HIGH);
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+    }
+    else if (clock_1==4){
+      digitalWrite(2,HIGH);
+      digitalWrite(3,HIGH);
+      digitalWrite(4,LOW);
+      digitalWrite(5,LOW);
+      digitalWrite(6,LOW);
+      digitalWrite(7,HIGH);
+      digitalWrite(8,LOW);
+    }
+    else if (clock_1==5){
+      digitalWrite(2,HIGH);
+      digitalWrite(3,LOW);
+      digitalWrite(4,LOW);
+      digitalWrite(5,LOW);
+      digitalWrite(6,LOW);
+      digitalWrite(7,LOW);
+      digitalWrite(8,HIGH);
+    }
+    else if (clock_1==6){
+      digitalWrite(2,LOW);
+      digitalWrite(3,LOW);
+      digitalWrite(4,LOW);
+      digitalWrite(5,LOW);
+      digitalWrite(6,LOW);
+      digitalWrite(7,LOW);
+      digitalWrite(8,HIGH);
+    }
+    else if (clock_1==7){
+      digitalWrite(2,HIGH);
+      digitalWrite(3,HIGH);
+      digitalWrite(4,LOW);
+      digitalWrite(5,HIGH);
+      digitalWrite(6,HIGH);
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+    }
+    else if (clock_1==8){
+      digitalWrite(2,LOW);
+      digitalWrite(3,LOW);
+      digitalWrite(4,LOW);
+      digitalWrite(5,LOW);
+      digitalWrite(6,LOW);
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+    }
+    else if (clock_1==9){
+      digitalWrite(2,HIGH);
+      digitalWrite(3,LOW);
+      digitalWrite(4,LOW);
+      digitalWrite(5,LOW);
+      digitalWrite(6,LOW);
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+    }
+}
+
+//Fungsi penampilan Jam, yang nanti dioper ke fungsi mux()
+void display_clock(){
+  if (COM==14){
+    digitalWrite(14,HIGH);
+    digitalWrite(15,LOW);
+    digitalWrite(16,LOW);
+    digitalWrite(17,LOW);
+    mux(clock[3]);
+  }
+  else if (COM==15){
+    digitalWrite(15,HIGH);
+    digitalWrite(14,LOW);
+    digitalWrite(16,LOW);
+    digitalWrite(17,LOW);
+    mux(clock[2]);
+  }
+  else if (COM==16){
+    digitalWrite(16,HIGH);
+    digitalWrite(17,LOW);
+    digitalWrite(14,LOW);
+    digitalWrite(15,LOW);
+    mux(clock[1]);
+  }
+  else if (COM==17){
+    digitalWrite(17,HIGH);
+    digitalWrite(14,LOW);
+    digitalWrite(15,LOW);
+    digitalWrite(16,LOW);
+    mux(clock[0]);
+  }
 }
 
 //Fungsi penambahan Clock
@@ -210,8 +203,6 @@ void setting_clock(){
     clock[1] = 0;
     clock[2] = 0;
     clock[3] = 0;
-    clock[4] = 0;
-    clock[5] = 0;
   }
 
   //Jika jam menunjukkan XX:59:59
@@ -226,9 +217,7 @@ void setting_clock(){
       clock[1]++;
     }
     clock[2] = 0;
-    clock[3] = 0;
-    clock[4] = 0;
-    clock[5] = 0;
+    clock[3] = 0; 
   }
 
   //Jika jam XX:XX:59
@@ -260,3 +249,43 @@ void setting_clock(){
   }
 }
 
+// Fungsi Interrupt setiap 10ms
+ISR(TIMER2_COMPA_vect){
+  if (COM==14){
+    COM = 15;
+  }
+  else if (COM==15){
+    COM = 16;
+  }
+  else if (COM==16){
+    COM = 17;
+  }
+  else if (COM==17){
+    COM = 14;
+  }
+  display_clock();
+  counter++;
+  if (counter==125){
+    setting_clock();
+    counter=0;
+  }
+}
+
+void loop(){
+//   COM=14;
+//   if (COM==14){
+//     COM=15;
+//   }
+//   else if (COM==15){
+//     COM=16;
+//   }
+//   else if (COM==16){
+//     COM=17;
+//   }
+//   else if (COM==17){
+//     COM=14;
+//   }
+
+//   display_clock();
+//   delay(1000);
+}

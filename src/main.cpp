@@ -2,6 +2,11 @@
 
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
+int state_menit_detik = 0;
+int digit1=0;
+int digit2=1;
+int digit3=2;
+int digit4=3;
 
 /*
   PIN:
@@ -31,10 +36,10 @@ void setup(){
   pinMode(6,OUTPUT);
   pinMode(7,OUTPUT);
   pinMode(8,OUTPUT);
-  pinMode(9,OUTPUT);
-  pinMode(10,OUTPUT);
-  pinMode(11,OUTPUT);
-  pinMode(12,OUTPUT);
+  pinMode(9,INPUT_PULLUP);
+  pinMode(10,INPUT_PULLUP);
+  pinMode(11,INPUT_PULLUP);
+  pinMode(12,INPUT_PULLUP);
   pinMode(13,OUTPUT);
   pinMode(14,OUTPUT);
   pinMode(15,OUTPUT);
@@ -53,7 +58,7 @@ void setup(){
   //Set Register untuk Timer 2 Prescaler 1024
   TCCR2A |= B00000010;
   TCCR2B |= B10000111;
-  OCR2A=125;
+  OCR2A=25;
     //Set register untuk mengaktifkan COMPARE
   TIMSK2 |= (1 << OCIE2A);
 
@@ -170,28 +175,28 @@ void display_clock(){
     digitalWrite(15,LOW);
     digitalWrite(16,LOW);
     digitalWrite(17,LOW);
-    mux(clock[3]);
+    mux(clock[digit4]);
   }
   else if (COM==15){
     digitalWrite(15,HIGH);
     digitalWrite(14,LOW);
     digitalWrite(16,LOW);
     digitalWrite(17,LOW);
-    mux(clock[2]);
+    mux(clock[digit3]);
   }
   else if (COM==16){
     digitalWrite(16,HIGH);
     digitalWrite(17,LOW);
     digitalWrite(14,LOW);
     digitalWrite(15,LOW);
-    mux(clock[1]);
+    mux(clock[digit2]);
   }
   else if (COM==17){
     digitalWrite(17,HIGH);
     digitalWrite(14,LOW);
     digitalWrite(15,LOW);
     digitalWrite(16,LOW);
-    mux(clock[0]);
+    mux(clock[digit1]);
   }
 }
 
@@ -251,6 +256,7 @@ void setting_clock(){
 
 // Fungsi Interrupt setiap 10ms
 ISR(TIMER2_COMPA_vect){
+  //Fungsi Ganti digit jam
   if (COM==14){
     COM = 15;
   }
@@ -265,27 +271,32 @@ ISR(TIMER2_COMPA_vect){
   }
   display_clock();
   counter++;
-  if (counter==125){
+  if (counter==3){
+    if (digitalRead(9)==0){
+      state_menit_detik = !state_menit_detik;
+    }
+  }
+  if (counter==625){
     setting_clock();
     counter=0;
   }
 }
 
 void loop(){
-//   COM=14;
-//   if (COM==14){
-//     COM=15;
-//   }
-//   else if (COM==15){
-//     COM=16;
-//   }
-//   else if (COM==16){
-//     COM=17;
-//   }
-//   else if (COM==17){
-//     COM=14;
-//   }
-
-//   display_clock();
-//   delay(1000);
+  if (state_menit_detik==1){
+    digit1 = 2;
+    digit2 = 3;
+    digit3 = 4;
+    digit4 = 5;
+  }
+  else{
+    digit1 = 0;
+    digit2 = 1;
+    digit3 = 2;
+    digit4 = 3;
+  }
+  Serial.print(digit1);
+  Serial.print(digit2);
+  Serial.print(digit3);
+  Serial.println(digit4);
 }

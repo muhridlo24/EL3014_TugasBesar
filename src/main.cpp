@@ -295,8 +295,4 @@ void loop(){
     digit3 = 2;
     digit4 = 3;
   }
-  Serial.print(digit1);
-  Serial.print(digit2);
-  Serial.print(digit3);
-  Serial.println(digit4);
 }

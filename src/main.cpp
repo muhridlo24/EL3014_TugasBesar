@@ -3,10 +3,10 @@
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
 int state_menit_detik = 0;
-int digit1=0;
-int digit2=1;
-int digit3=2;
-int digit4=3;
+int digit1;
+int digit2;
+int digit3;
+int digit4;
 
 /*
   PIN:
@@ -271,8 +271,8 @@ ISR(TIMER2_COMPA_vect){
   }
   display_clock();
   counter++;
-  if (counter==3){
-    if (digitalRead(9)==0){
+  if (counter==2){
+    if (digitalRead(9)==LOW){
       state_menit_detik = !state_menit_detik;
     }
   }

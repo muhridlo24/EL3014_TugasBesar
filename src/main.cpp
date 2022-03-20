@@ -3,10 +3,18 @@
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
 int state_menit_detik = 0;
-int digit1;
-int digit2;
-int digit3;
-int digit4;
+int digit1=2;
+int digit2=3;
+int digit3=4;
+int digit4=5;
+int button1=9;
+int button2=10;
+int button3=11;
+int button4=12;
+String state="jam digital quo";
+String prev_state;
+int segmen_kiri=0;
+
 
 /*
   PIN:
@@ -18,9 +26,7 @@ int digit4;
   - 7 : segment A
   - 8 : segment F
   - 9 : segment G
-
   - 2 : buzzer
-
   - A0 : button 1
   - A1 : button 2
   - A2 : button 3
@@ -49,20 +55,23 @@ void setup(){
 
   Serial.begin(9600);
 
-  //TImer yang digunakan: TIMER 2 dengan Prescaler 1024
+  //TIMER 2 (15,625 kHz dan prescaler 1024)
   cli();
-  //Inisasi agar isi register 0
   TCCR2A = 0;
   TCCR2B = 0;
-
-  //Set Register untuk Timer 2 Prescaler 1024
-  TCCR2A |= B00000010;
+  TCCR2A |= B00000010; //Set Register untuk Timer 2 Prescaler 1024
   TCCR2B |= B10000111;
   OCR2A=25;
-    //Set register untuk mengaktifkan COMPARE
-  TIMSK2 |= (1 << OCIE2A);
-
+  TIMSK2 |= (1 << OCIE2A); //Set register untuk mengaktifkan COMPARE
+  
+  //TIMER 1 (100 Hz dan prescaler 256)
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCCR1B |= B00000100;//Set Register untuk Timer 1 Prescaler 256
+  OCR1A=625;
+  TIMSK1 |= (1 << OCIE1A);
   sei();
+
   Serial.print("OCR2A: "); 
   Serial.println(OCR2A, HEX);
   Serial.print("TCCR2A: "); 
@@ -271,28 +280,81 @@ ISR(TIMER2_COMPA_vect){
   }
   display_clock();
   counter++;
-  if (counter==2){
+  if (counter%2==0){
     if (digitalRead(9)==LOW){
       state_menit_detik = !state_menit_detik;
     }
   }
-  if (counter==625){
+  if (counter==625 && state=="jam digital quo"){
     setting_clock();
     counter=0;
   }
 }
 
+ISR(TIMER1_COMPA_vect){
+  if (state=="jam digital quo"){
+    Serial.println(state);
+    prev_state="jam digital quo";
+    if (digitalRead(button1)==LOW){ //tekan button 1
+      state="menit detik";
+    }
+    if (digitalRead(button2)==LOW){
+      state="set jam digital";
+    }
+  }
+  if (state=="set jam digital"){
+    Serial.println(state);
+    prev_state="set jam digital";
+    if (digitalRead(button1)==LOW){ //tekan button 1
+      state="jam digital quo";
+    }
+    if (digitalRead(button2)==LOW){ //tekan button 2
+      state="switch seven segment";
+    }
+    if (digitalRead(button3)==LOW){ //tekan button 3
+      state="penjumlahan";
+    }
+    if (digitalRead(button4)==LOW){ //tekan button 4
+      state="pengurangan";
+    } 
+  }
+  if (state=="switch seven segment"){
+    Serial.println(state);
+    state=prev_state;
+    prev_state="switch seven segment";
+    segmen_kiri = !segmen_kiri;
+  }
+  if (state=="penjumlahan"){
+    Serial.println(state);
+    state=prev_state;
+    prev_state="penjumlahan";
+    if (segmen_kiri){
+      clock[1]++;
+    }
+    else{
+      clock[3]++;
+    }
+  }
+  if (state=="pengurangan"){
+    Serial.println(state);
+    state=prev_state;
+    prev_state="pengurangan";
+    if (segmen_kiri){
+      clock[1]--;
+    }
+    else{
+      clock[3]--;
+    }
+  }
+  if (state=="menit detik"){
+    Serial.println(state);
+    state=prev_state;
+    prev_state="menit detik";
+  }
+}
+
+
+
 void loop(){
-  if (state_menit_detik==1){
-    digit1 = 2;
-    digit2 = 3;
-    digit3 = 4;
-    digit4 = 5;
-  }
-  else{
-    digit1 = 0;
-    digit2 = 1;
-    digit3 = 2;
-    digit4 = 3;
-  }
+
 }

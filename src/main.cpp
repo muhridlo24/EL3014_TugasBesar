@@ -13,6 +13,7 @@ int button4=12;
 int state_ganti_clock = 0;
 int state_ganti_digit = 0;
 int state_switch_seven_segment = 0;
+String prev_state;
 int segmen_kiri=0;
 unsigned long myTime;
 

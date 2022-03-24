@@ -14,6 +14,7 @@ int button4=12;
 String state="jam digital quo";
 String prev_state;
 int segmen_kiri=0;
+unsigned long myTime;
 
 
 /*
@@ -292,9 +293,9 @@ ISR(TIMER2_COMPA_vect){
 }
 
 ISR(TIMER1_COMPA_vect){
+  myTime = millis();
   if (state=="jam digital quo"){
     Serial.println(state);
-    prev_state="jam digital quo";
     if (digitalRead(button1)==LOW){ //tekan button 1
       state="menit detik";
     }
@@ -304,7 +305,6 @@ ISR(TIMER1_COMPA_vect){
   }
   if (state=="set jam digital"){
     Serial.println(state);
-    prev_state="set jam digital";
     if (digitalRead(button1)==LOW){ //tekan button 1
       state="jam digital quo";
     }
@@ -320,25 +320,35 @@ ISR(TIMER1_COMPA_vect){
   }
   if (state=="switch seven segment"){
     Serial.println(state);
-    state=prev_state;
-    prev_state="switch seven segment";
-    segmen_kiri = !segmen_kiri;
+    state="set jam digital";
   }
   if (state=="penjumlahan"){
     Serial.println(state);
-    state=prev_state;
-    prev_state="penjumlahan";
-    if (segmen_kiri){
-      clock[1]++;
-    }
-    else{
-      clock[3]++;
-    }
+    state="set jam digital";
   }
   if (state=="pengurangan"){
     Serial.println(state);
     state=prev_state;
-    prev_state="pengurangan";
+    prev_state="set jam digital";
+  }
+  if (state=="menit detik"){
+    Serial.println(state);
+    state="jam digital quo";
+  }
+  Serial.print("Time: ");
+  Serial.println(myTime);
+}
+
+
+
+void loop(){
+  if (state == "switch seven segment"){
+    segmen_kiri =! segmen_kiri;
+  }
+  if (state == "penjumlahan"){
+    setting_clock();
+  }
+  if (state == "pengurangan"){
     if (segmen_kiri){
       clock[1]--;
     }
@@ -346,15 +356,4 @@ ISR(TIMER1_COMPA_vect){
       clock[3]--;
     }
   }
-  if (state=="menit detik"){
-    Serial.println(state);
-    state=prev_state;
-    prev_state="menit detik";
-  }
-}
-
-
-
-void loop(){
-
 }

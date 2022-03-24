@@ -1,20 +1,25 @@
 #include <Arduino.h>
-
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
 int state_menit_detik = 0;
-int digit1=2;
-int digit2=3;
-int digit3=4;
-int digit4=5;
+int digit1;
+int digit2;
+int digit3;
+int digit4;
 int button1=9;
 int button2=10;
 int button3=11;
 int button4=12;
-String state="jam digital quo";
-String prev_state;
+int state_ganti_clock = 0;
+int state_ganti_digit = 0;
+int state_switch_seven_segment = 0;
 int segmen_kiri=0;
 unsigned long myTime;
+
+int state_quo=1;
+int state_set_jam=0;
+int state_penjumlahan=0;
+int state_pengurangan=0;
 
 
 /*
@@ -53,9 +58,6 @@ void setup(){
   pinMode(16,OUTPUT);
   pinMode(17,OUTPUT);
 
-
-  Serial.begin(9600);
-
   //TIMER 2 (15,625 kHz dan prescaler 1024)
   cli();
   TCCR2A = 0;
@@ -65,23 +67,14 @@ void setup(){
   OCR2A=25;
   TIMSK2 |= (1 << OCIE2A); //Set register untuk mengaktifkan COMPARE
   
-  //TIMER 1 (100 Hz dan prescaler 256)
-  TCCR1A = 0;
-  TCCR1B = 0;
-  TCCR1B |= B00000100;//Set Register untuk Timer 1 Prescaler 256
-  OCR1A=625;
-  TIMSK1 |= (1 << OCIE1A);
+  // //TIMER 1 (100 Hz dan prescaler 256)
+  // TCCR1A = 0;
+  // TCCR1B = 0;
+  // TCCR1B |= B00000100;//Set Register untuk Timer 1 Prescaler 256
+  // OCR1A=6250;
+  // TIMSK1 |= (1 << OCIE1A);
   sei();
 
-  Serial.print("OCR2A: "); 
-  Serial.println(OCR2A, HEX);
-  Serial.print("TCCR2A: "); 
-  Serial.println(TCCR2A, HEX);
-  Serial.print("TCCR2B: ");
-  Serial.println(TCCR2B, HEX);
-  Serial.print("TIMSK2: "); 
-  Serial.println(TIMSK2, HEX);
-  Serial.println("TIMER2 Setup Finished.");
 }
 
 //fungsi Multiplexer 1 digit sevent segment untuk nentuin segment mana aja yg nyala
@@ -219,7 +212,6 @@ void setting_clock(){
     clock[2] = 0;
     clock[3] = 0;
   }
-
   //Jika jam menunjukkan XX:59:59
   else if(clock[2]==5 && clock[3]==9 && clock[4]==5 && clock[5]==9){
     //Jika jam X9:59:59
@@ -234,7 +226,6 @@ void setting_clock(){
     clock[2] = 0;
     clock[3] = 0; 
   }
-
   //Jika jam XX:XX:59
   else if(clock[4]==5 && clock[5]==9){
     //Jika jam XX:X9:59
@@ -249,8 +240,6 @@ void setting_clock(){
     clock[4] = 0;
     clock[5] = 0;
   }
-
-  
   else{
     //Jika Jam XX:XX:X9
     if (clock[5]==9){
@@ -263,6 +252,103 @@ void setting_clock(){
     }
   }
 }
+
+void set_jam(){
+  //digit yg diganti adalah digit ke 2 (jam satuan)
+  if (state_switch_seven_segment==0){
+    if (state_penjumlahan==1){
+      if (clock[0]==2 && clock[1]==4){
+        clock[0]=0;
+        clock[1]=0;
+      }
+      else if(clock[1]==9){
+        clock[0]++;
+        clock[1]=0;
+      }
+      else{
+        clock[1]++;
+      }
+      state_penjumlahan=0;
+    }
+    else if(state_pengurangan==1){
+      if (clock[0]==0 && clock[1]==0){
+        clock[0]=2;
+        clock[1]=4;
+      }
+      else if(clock[1]==0){
+        clock[0]--;
+        clock[1]=9;
+      }
+      else{
+        clock[1]--;
+      }
+      
+      state_pengurangan=0;
+    }
+  }
+  //digit yg diganti adalah digit ke 4
+  else{
+    if (state_penjumlahan==1){
+      if (clock[2]==5 && clock[3]==9){
+        if(clock[0]==5 && clock[1]==9){
+          clock[0]=0;
+          clock[1]=0;
+          clock[2]=0;
+          clock[3]=0;
+        }else if(clock[1]==9){
+          clock[0]++;
+          clock[1]=0;
+          clock[2]=0;
+          clock[3]=0;
+          
+        }
+        else{
+          clock[1]++;
+          clock[2]=0;
+          clock[3]=0;
+        }
+      }
+      else if(clock[3]==9){
+        clock[2]++;
+        clock[3]=0;
+      }
+      else{
+        clock[3]++;
+      }
+      state_penjumlahan=0;
+    }
+    else if(state_pengurangan==1){
+      if (clock[2]==0 && clock[3]==0){
+        if (clock[0]==0 && clock[1]==0){
+          clock[0]=2;
+          clock[1]=3;
+          clock[2]=5;
+          clock[3]=9;
+        }
+        else if(clock[1]==0){
+          clock[0]--;
+          clock[1]=9;    
+          clock[2]=2;
+          clock[3]=4;
+        }
+        else{
+          clock[1]--;
+          clock[2]=5;
+          clock[3]=9;
+        }
+      }
+      else if(clock[3]==0){
+        clock[2]--;
+        clock[3]=9;
+      }
+      else{
+        clock[3]--;
+      }
+      state_pengurangan=0;
+    }
+  }
+}
+
 
 // Fungsi Interrupt setiap 10ms
 ISR(TIMER2_COMPA_vect){
@@ -279,81 +365,87 @@ ISR(TIMER2_COMPA_vect){
   else if (COM==17){
     COM = 14;
   }
-  display_clock();
-  counter++;
-  if (counter%2==0){
-    if (digitalRead(9)==LOW){
-      state_menit_detik = !state_menit_detik;
-    }
-  }
-  if (counter==625 && state=="jam digital quo"){
-    setting_clock();
-    counter=0;
-  }
-}
+  state_ganti_digit = 1;
 
-ISR(TIMER1_COMPA_vect){
-  myTime = millis();
-  if (state=="jam digital quo"){
-    Serial.println(state);
-    if (digitalRead(button1)==LOW){ //tekan button 1
-      state="menit detik";
+  if (state_quo==1){
+    counter++;
+  }
+  if (counter%100==0){
+    if (state_quo==1){
+      if (digitalRead(button2)==LOW){
+        state_set_jam=1;
+        state_quo=0;
+      }
+      else if (digitalRead(button1)==LOW){
+        state_menit_detik = !state_menit_detik;
+      }
     }
-    if (digitalRead(button2)==LOW){
-      state="set jam digital";
+    else if (state_set_jam==1){
+      if (digitalRead(button1)==LOW){ //tekan button 1
+        state_quo=1;
+        state_set_jam=0;
+      }
+      else if (digitalRead(button2)==LOW){ //tekan button 2
+        state_switch_seven_segment = 1;
+      }
+      else if (digitalRead(button3)==LOW){ //tekan button 3
+        state_penjumlahan=1;
+      }
+      else if (digitalRead(button4)==LOW){ //tekan button 4
+        state_pengurangan=1;
+      }
+      state_menit_detik=0;
     }
   }
-  if (state=="set jam digital"){
-    Serial.println(state);
-    if (digitalRead(button1)==LOW){ //tekan button 1
-      state="jam digital quo";
+
+  if (counter==625){
+    if (state_quo==1){
+      state_ganti_clock = 1;
+      counter=0;
     }
-    if (digitalRead(button2)==LOW){ //tekan button 2
-      state="switch seven segment";
-    }
-    if (digitalRead(button3)==LOW){ //tekan button 3
-      state="penjumlahan";
-    }
-    if (digitalRead(button4)==LOW){ //tekan button 4
-      state="pengurangan";
-    } 
   }
-  if (state=="switch seven segment"){
-    Serial.println(state);
-    state="set jam digital";
-  }
-  if (state=="penjumlahan"){
-    Serial.println(state);
-    state="set jam digital";
-  }
-  if (state=="pengurangan"){
-    Serial.println(state);
-    state=prev_state;
-    prev_state="set jam digital";
-  }
-  if (state=="menit detik"){
-    Serial.println(state);
-    state="jam digital quo";
-  }
-  Serial.print("Time: ");
-  Serial.println(myTime);
 }
 
 
 
 void loop(){
-  if (state == "switch seven segment"){
-    segmen_kiri =! segmen_kiri;
+  // if (state == "switch seven segment"){
+  //   segmen_kiri =! segmen_kiri;
+  // }
+  // if (state == "penjumlahan"){
+  //   setting_clock();
+  // }
+  // if (state == "pengurangan"){
+  //   if (segmen_kiri){
+  //     clock[1]--;
+  //   }
+  //   else{
+  //     clock[3]--;
+  //   }
+  // }
+  if (state_ganti_digit==1){
+    display_clock();
+    state_ganti_digit = 0;
   }
-  if (state == "penjumlahan"){
-    setting_clock();
+  if (state_set_jam==1){
+    set_jam();
   }
-  if (state == "pengurangan"){
-    if (segmen_kiri){
-      clock[1]--;
+  
+  else if (state_quo==1){
+    if (state_ganti_clock==1){
+      setting_clock();
+      state_ganti_clock = 0;
     }
-    else{
-      clock[3]--;
-    }
+  }
+  if(state_menit_detik==0){
+    digit1=0;
+    digit2=1;
+    digit3=2;
+    digit4=3;
+  } else{
+    digit1=2;
+    digit2=3;
+    digit3=4;
+    digit4=5;
   }
 }

@@ -287,7 +287,7 @@ void set_jam(){
   else{
     if (state_penjumlahan==1){
       if (clock[2]==5 && clock[3]==9){
-        if(clock[0]==5 && clock[1]==9){
+        if(clock[0]==2 && clock[1]==4){
           clock[0]=0;
           clock[1]=0;
           clock[2]=0;
@@ -325,8 +325,8 @@ void set_jam(){
         else if(clock[1]==0){
           clock[0]--;
           clock[1]=9;    
-          clock[2]=2;
-          clock[3]=4;
+          clock[2]=5;
+          clock[3]=9;
         }
         else{
           clock[1]--;

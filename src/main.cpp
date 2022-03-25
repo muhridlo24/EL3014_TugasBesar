@@ -1,4 +1,5 @@
 #include <Arduino.h>
+
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
 int state_menit_detik = 0;
@@ -58,6 +59,7 @@ void setup(){
   pinMode(15,OUTPUT);
   pinMode(16,OUTPUT);
   pinMode(17,OUTPUT);
+  Serial.begin(115200);
 
   //TIMER 2 (15,625 kHz dan prescaler 1024)
   cli();
@@ -68,12 +70,6 @@ void setup(){
   OCR2A=25;
   TIMSK2 |= (1 << OCIE2A); //Set register untuk mengaktifkan COMPARE
   
-  // //TIMER 1 (100 Hz dan prescaler 256)
-  // TCCR1A = 0;
-  // TCCR1B = 0;
-  // TCCR1B |= B00000100;//Set Register untuk Timer 1 Prescaler 256
-  // OCR1A=6250;
-  // TIMSK1 |= (1 << OCIE1A);
   sei();
 
 }
@@ -350,7 +346,6 @@ void set_jam(){
   }
 }
 
-
 // Fungsi Interrupt setiap 10ms
 ISR(TIMER2_COMPA_vect){
   //Fungsi Ganti digit jam
@@ -368,10 +363,10 @@ ISR(TIMER2_COMPA_vect){
   }
   state_ganti_digit = 1;
 
-  if (state_quo==1){
-    counter++;
-  }
-  if (counter%100==0){
+  counter++;
+
+  //FSM
+  if (counter%200==0){
     if (state_quo==1){
       if (digitalRead(button2)==LOW){
         state_set_jam=1;
@@ -385,9 +380,10 @@ ISR(TIMER2_COMPA_vect){
       if (digitalRead(button1)==LOW){ //tekan button 1
         state_quo=1;
         state_set_jam=0;
+        state_switch_seven_segment=0;
       }
       else if (digitalRead(button2)==LOW){ //tekan button 2
-        state_switch_seven_segment = 1;
+        state_switch_seven_segment =!state_switch_seven_segment;
       }
       else if (digitalRead(button3)==LOW){ //tekan button 3
         state_penjumlahan=1;
@@ -400,44 +396,19 @@ ISR(TIMER2_COMPA_vect){
   }
 
   if (counter==625){
-    if (state_quo==1){
+    if (state_quo==1 && state_set_jam==0){
       state_ganti_clock = 1;
-      counter=0;
     }
+    counter=0;
   }
 }
 
-
-
 void loop(){
-  // if (state == "switch seven segment"){
-  //   segmen_kiri =! segmen_kiri;
-  // }
-  // if (state == "penjumlahan"){
-  //   setting_clock();
-  // }
-  // if (state == "pengurangan"){
-  //   if (segmen_kiri){
-  //     clock[1]--;
-  //   }
-  //   else{
-  //     clock[3]--;
-  //   }
-  // }
   if (state_ganti_digit==1){
     display_clock();
     state_ganti_digit = 0;
   }
-  if (state_set_jam==1){
-    set_jam();
-  }
   
-  else if (state_quo==1){
-    if (state_ganti_clock==1){
-      setting_clock();
-      state_ganti_clock = 0;
-    }
-  }
   if(state_menit_detik==0){
     digit1=0;
     digit2=1;
@@ -449,4 +420,25 @@ void loop(){
     digit3=4;
     digit4=5;
   }
+  
+  if (state_set_jam==1){
+    set_jam();
+  }
+
+  else if (state_quo==1){
+    if (state_ganti_clock==1){
+      setting_clock();
+      state_ganti_clock = 0;
+    }
+  }
+  Serial.print("Quo: ");
+  Serial.print(state_quo);
+  Serial.print("  Set Jam: ");
+  Serial.print(state_set_jam);
+  Serial.print("switch seven segment: ");
+  Serial.print(state_switch_seven_segment);
+  Serial.print("  penjumlahan: ");
+  Serial.print(state_penjumlahan);
+  Serial.print("  pengurangan: ");
+  Serial.println(state_pengurangan);
 }

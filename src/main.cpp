@@ -22,7 +22,6 @@ int segmen_kiri=0;
 unsigned long myTime;
 int temp_alarm=1;
 int state_start_pause=0;
- 
 int state_quo=1;
 int state_set_jam=0;
 int state_penjumlahan=0;
@@ -51,7 +50,6 @@ int state_set_stopwatch = 0;
   - 13 : buzzer
 */
 
-
 void setup(){
   pinMode(2,OUTPUT);
   pinMode(3,OUTPUT);
@@ -69,13 +67,12 @@ void setup(){
   pinMode(15,OUTPUT);
   pinMode(16,OUTPUT);
   pinMode(17,OUTPUT);
-  Serial.begin(9600);
 
-  //TIMER 2 (15,625 kHz dan prescaler 1024)
+  //STOPWATCH 2 (15,625 kHz dan prescaler 1024)
   cli();
   TCCR2A = 0;
   TCCR2B = 0;
-  TCCR2A |= B00000010; //Set Register untuk Timer 2 Prescaler 1024
+  TCCR2A |= B00000010; //Set Register untuk Stopwatch 2 Prescaler 1024
   TCCR2B |= B10000111;
   OCR2A=25;
   TIMSK2 |= (1 << OCIE2A); //Set register untuk mengaktifkan COMPARE
@@ -262,17 +259,18 @@ void setting_clock(int clock[]){
 
 void setting_stopwatch(){
   if (clock_stopwatch[2]==5 && clock_stopwatch[3]==9){
-    if (clock_stopwatch[0]==5 && clock_stopwatch[1]==9){
-      clock_stopwatch[0]=0;
+    if(clock_stopwatch[0]==9 && clock_stopwatch[1]==9){
+      clock_stopwatch[0]=9;
+      clock_stopwatch[1]=9;
+      clock_stopwatch[2]=5;
+      clock_stopwatch[3]=9;
+    }
+    else if(clock[1]==9){
+      clock_stopwatch[0]++;
       clock_stopwatch[1]=0;
       clock_stopwatch[2]=0;
       clock_stopwatch[3]=0;
-    }
-    else if(clock_stopwatch[1]==9){
-      clock_stopwatch[0]++;
-      clock_stopwatch[1]=0;    
-      clock_stopwatch[2]=0;
-      clock_stopwatch[3]=0;
+      
     }
     else{
       clock_stopwatch[1]++;
@@ -385,58 +383,6 @@ void set_jam(int clock[]){
   }
 }
 
-void set_stopwatch(){
-  //digit yg diganti adalah digit ke 2 (menit satuan)
-  if (state_switch_seven_segment==0){
-    if (state_penjumlahan==1){
-      if (clock_stopwatch[0]==5 && clock_stopwatch[1]==9){
-        clock_stopwatch[0]=0;
-        clock_stopwatch[1]=0;
-      }
-      else if(clock_stopwatch[1]==9){
-        clock_stopwatch[0]++;
-        clock_stopwatch[1]=0;
-      }
-      else{
-        clock_stopwatch[1]++;
-      }
-      state_penjumlahan=0;
-    }
-  }
-  else{
-    if (state_penjumlahan==1){
-      if (clock_stopwatch[2]==5 && clock_stopwatch[3]==9){
-        if(clock_stopwatch[0]==5 && clock_stopwatch[1]==9){
-          clock_stopwatch[0]=0;
-          clock_stopwatch[1]=0;
-          clock_stopwatch[2]=0;
-          clock_stopwatch[3]=0;
-        }
-        else if(clock_stopwatch[1]==9){
-          clock_stopwatch[0]++;
-          clock_stopwatch[1]=0;
-          clock_stopwatch[2]=0;
-          clock_stopwatch[3]=0;
-          
-        }
-        else{
-          clock_stopwatch[1]++;
-          clock_stopwatch[2]=0;
-          clock_stopwatch[3]=0;
-        }
-      }
-      else if(clock_stopwatch[3]==9){
-        clock_stopwatch[2]++;
-        clock_stopwatch[3]=0;
-      }
-      else{
-        clock_stopwatch[3]++;
-      }
-      state_penjumlahan=0;
-    }
-  }
-} 
-
 void alarm_on(){
   if(counter_alarm%125==0 && counter_alarm!=0){
     temp_alarm=!temp_alarm;
@@ -454,20 +400,15 @@ void alarm_on(){
   }
 }
 
-
 /*
 FSM:
 state_ganti_digit = menyatakan jam digital menyala berganti digit setiap periode 1/625 sekon (tanpa melihat error)
 state_menit_detik = menyatakan jam digital menyala dalam format menit:detik dengan pengecekan 100/625 sekon pada button.
 State ini mengaktifkan digit2 yg menyala setiap periode (jam:menit untuk 0,1,2,3 dan menit:detik untuk 2,3,4,5).
-
 state_set_jam = menyatakan jam digital dapat diubah secara manual dengan pengecekan 100/625 sekon.
 State ini mengaktifkan mode set_jam dengan mematikan state_quo. Penjelasan lengkap di fungsi ISR
-
 state_quo = menyatakan jam berada pada mode normal yaitu dengan menambah clock 1 detik setiap siklusnya selama 625 kali looping (dianggap ideal).
-
 state_ganti_clock = state jam digital menambah clock 1 detik. State ini aktif ketika state_quo aktif dan ter-enable secara otomatis.
-
 state_switch_seven_segment = state yang aktif ketika mode state_quo dan button 3 ditekan. State ini aktif ketika mode set jam
 serta dengan menekan button 2.
 */
@@ -554,21 +495,14 @@ ISR(TIMER2_COMPA_vect){
       else if (digitalRead(button2)==LOW){ //tekan button 2
         state_set_stopwatch=1;
         state_quo_stopwatch=0;
-        state_start_pause=0;
       }
     }
-    else if (state_set_stopwatch){ //tekan button
+    else if (state_set_stopwatch){
       if (digitalRead(button1)==LOW){ //tekan button 1
         state_quo_stopwatch=1;
         state_set_stopwatch=0;
       }
-      else if (digitalRead(button2)==LOW){ //tekan button 2
-        state_switch_seven_segment =!state_switch_seven_segment;
-      }
-      else if (digitalRead(button3)==LOW && state_start_pause==0){ //tekan button 3
-        state_penjumlahan=1;
-      }
-      else if (digitalRead(button4)==LOW){ //tekan button 4
+      else if (digitalRead(button2)==LOW){ //tekan button2
         state_start_pause=!state_start_pause;
       }
     }
@@ -579,7 +513,7 @@ ISR(TIMER2_COMPA_vect){
 
   if (counter==625){
     if (state_quo==1 || state_start_pause==1){
-      state_ganti_clock = 1;
+      state_ganti_clock = 1;    
     }
     counter=0;
   }
@@ -606,16 +540,11 @@ void loop(){
       clock_stopwatch[3]=0;
     }
     if (state_set_stopwatch){
-      set_stopwatch();
-    }
-    if (state_start_pause){
-      if (state_ganti_clock==1){
-        Serial.print(clock_stopwatch[0]);
-        Serial.print(clock_stopwatch[1]);
-        Serial.print(clock_stopwatch[2]);
-        Serial.println(clock_stopwatch[3]);
-        setting_stopwatch();
-        state_ganti_clock=0;
+      if (state_start_pause){
+        if (state_ganti_clock){
+          setting_stopwatch();
+          state_ganti_clock=0;
+        }
       }
     }
   }

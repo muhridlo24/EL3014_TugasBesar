@@ -2,6 +2,7 @@
 
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
+int clock_stopwatch[4] = {0,0,0,0};
 int state_menit_detik = 0;
 int digit1;
 int digit2;
@@ -14,10 +15,12 @@ int button4=12;
 int state_ganti_clock = 0;
 int state_ganti_digit = 0;
 int state_switch_seven_segment = 0;
+int state_quo_stopwatch = 0;
+int state_set_stopwatch = 0;
 String prev_state;
 int segmen_kiri=0;
 unsigned long myTime;
-
+int state_start_pause=0;
 int state_quo=1;
 int state_set_jam=0;
 int state_penjumlahan=0;
@@ -59,7 +62,6 @@ void setup(){
   pinMode(15,OUTPUT);
   pinMode(16,OUTPUT);
   pinMode(17,OUTPUT);
-  Serial.begin(115200);
 
   //TIMER 2 (15,625 kHz dan prescaler 1024)
   cli();
@@ -168,6 +170,38 @@ void mux(int clock_1){
     }
 }
 
+void display_stopwatch(){
+  if (COM==14){
+    digitalWrite(14,HIGH);
+    digitalWrite(15,LOW);
+    digitalWrite(16,LOW);
+    digitalWrite(17,LOW);
+    mux(clock_stopwatch[digit4]);
+  }
+  else if (COM==15){
+    digitalWrite(15,HIGH);
+    digitalWrite(14,LOW);
+    digitalWrite(16,LOW);
+    digitalWrite(17,LOW);
+    mux(clock_stopwatch[digit3]);
+  }
+  else if (COM==16){
+    digitalWrite(16,HIGH);
+    digitalWrite(17,LOW);
+    digitalWrite(14,LOW);
+    digitalWrite(15,LOW);
+    mux(clock_stopwatch[digit2]);
+  }
+  else if (COM==17){
+    digitalWrite(17,HIGH);
+    digitalWrite(14,LOW);
+    digitalWrite(15,LOW);
+    digitalWrite(16,LOW);
+    mux(clock_stopwatch[digit1]);
+  }
+}
+
+
 //Fungsi penampilan Jam, yang nanti dioper ke fungsi mux()
 void display_clock(){
   if (COM==14){
@@ -246,9 +280,90 @@ void setting_clock(){
     //Detik bertambah
     else{
       clock[5]++;
-    }
+    } 
   }
 }
+
+void setting_stopwatch(){
+  if (clock_stopwatch[2]==0 && clock_stopwatch[3]==0){
+    if (clock_stopwatch[0]==0 && clock_stopwatch[1]==0){
+      clock_stopwatch[0]=0;
+      clock_stopwatch[1]=0;
+      clock_stopwatch[2]=0;
+      clock_stopwatch[3]=0;
+    }
+    else if(clock_stopwatch[1]==0){
+      clock_stopwatch[0]--;
+      clock_stopwatch[1]=9;    
+      clock_stopwatch[2]=5;
+      clock_stopwatch[3]=9;
+    }
+    else{
+      clock_stopwatch[1]--;
+      clock_stopwatch[2]=5;
+      clock_stopwatch[3]=9;
+    }
+  }
+  else if(clock_stopwatch[3]==0){
+    clock_stopwatch[2]--;
+    clock_stopwatch[3]=9;
+  }
+  else{
+    clock_stopwatch[3]--;
+  }
+}
+
+void set_stopwatch(){
+  //digit yg diganti adalah digit ke 2 (menit satuan)
+  if (state_switch_seven_segment==0){
+    if (state_penjumlahan==1){
+      if (clock_stopwatch[0]==9 && clock_stopwatch[1]==9){
+        clock[0]=9;
+        clock[1]=9;
+      }
+      else if(clock[1]==9){
+        clock[0]++;
+        clock[1]=0;
+      }
+      else{
+        clock[1]++;
+      }
+      state_penjumlahan=0;
+    }
+  }
+  else{
+    if (state_penjumlahan==1){
+      if (clock_stopwatch[2]==5 && clock_stopwatch[3]==9){
+        if(clock_stopwatch[0]==9 && clock[1]==9){
+          clock_stopwatch[0]=9;
+          clock_stopwatch[1]=9;
+          clock_stopwatch[2]=5;
+          clock_stopwatch[3]=9;
+        }
+        else if(clock_stopwatch[1]==9){
+          clock_stopwatch[0]++;
+          clock_stopwatch[1]=0;
+          clock_stopwatch[2]=0;
+          clock_stopwatch[3]=0;
+          
+        }
+        else{
+          clock_stopwatch[1]++;
+          clock_stopwatch[2]=0;
+          clock_stopwatch[3]=0;
+        }
+      }
+      else if(clock_stopwatch[3]==9){
+        clock_stopwatch[2]++;
+        clock_stopwatch[3]=0;
+      }
+      else{
+        clock_stopwatch[3]++;
+      }
+      state_penjumlahan=0;
+    }
+  }
+} 
 
 void set_jam(){
   //digit yg diganti adalah digit ke 2 (jam satuan)
@@ -292,12 +407,12 @@ void set_jam(){
           clock[1]=0;
           clock[2]=0;
           clock[3]=0;
-        }else if(clock[1]==9){
+        }
+        else if(clock[1]==9){
           clock[0]++;
           clock[1]=0;
           clock[2]=0;
           clock[3]=0;
-          
         }
         else{
           clock[1]++;
@@ -368,14 +483,19 @@ ISR(TIMER2_COMPA_vect){
   //FSM
   if (counter%200==0){
     if (state_quo==1){
-      if (digitalRead(button2)==LOW){
+      if (digitalRead(button1)==LOW){ //tekan button 1
+        state_menit_detik = !state_menit_detik;
+      }
+      else if (digitalRead(button2)==LOW){ //tekan button 2
         state_set_jam=1;
         state_quo=0;
       }
-      else if (digitalRead(button1)==LOW){
-        state_menit_detik = !state_menit_detik;
+      else if (digitalRead(button4)==LOW){ //tekan button 4
+        state_quo_stopwatch=1;
+        state_quo=0;
       }
     }
+  }
     else if (state_set_jam==1){
       if (digitalRead(button1)==LOW){ //tekan button 1
         state_quo=1;
@@ -393,52 +513,92 @@ ISR(TIMER2_COMPA_vect){
       }
       state_menit_detik=0;
     }
-  }
+    else if (state_quo_stopwatch){
+      if (digitalRead(button1)==LOW){ //tekan button 1
+        state_quo=1;
+        state_quo_stopwatch=0;
+      }
+      else if (digitalRead(button2)==LOW){ //tekan button 2
+        state_set_stopwatch=1;
+        state_quo_stopwatch=0;
+      }
+    }
+    else if (state_set_stopwatch){ //tekan button
+      if (digitalRead(button1)==LOW){ //tekan button 1
+        state_quo_stopwatch=1;
+        state_set_stopwatch=0;
+      }
+      else if (digitalRead(button2)==LOW){ //tekan button 2
+        state_switch_seven_segment =!state_switch_seven_segment;
+      }
+      else if (digitalRead(button3)==LOW){ //tekan button 3
+        state_penjumlahan=1;
+      }
+      else if (digitalRead(button4)==LOW){ //tekan button 4
+        state_start_pause=!state_start_pause;
+      }
+    }
 
   if (counter==625){
-    if (state_quo==1 && state_set_jam==0){
-      state_ganti_clock = 1;
-    }
+    //if (state_quo==1 && state_set_jam==0){}
     counter=0;
+    state_ganti_clock = 1;
   }
 }
 
 void loop(){
-  if (state_ganti_digit==1){
-    display_clock();
-    state_ganti_digit = 0;
-  }
-  
-  if(state_menit_detik==0){
+  if (state_quo_stopwatch || state_set_stopwatch){
     digit1=0;
     digit2=1;
     digit3=2;
     digit4=3;
-  } else{
-    digit1=2;
-    digit2=3;
-    digit3=4;
-    digit4=5;
-  }
-  
-  if (state_set_jam==1){
-    set_jam();
-  }
-
-  else if (state_quo==1){
-    if (state_ganti_clock==1){
-      setting_clock();
-      state_ganti_clock = 0;
+    if (state_ganti_digit==1){
+      display_stopwatch();
+      state_ganti_digit = 0;
+    }
+    if (state_quo_stopwatch){
+      clock_stopwatch[0]=0;
+      clock_stopwatch[1]=0;
+      clock_stopwatch[2]=0;
+      clock_stopwatch[3]=0;
+    }
+    if (state_set_stopwatch){
+      set_stopwatch();
+    }
+    if (state_start_pause){
+      if (state_ganti_clock==1){
+        setting_stopwatch();
+        state_ganti_clock=0;
+      }
     }
   }
-  Serial.print("Quo: ");
-  Serial.print(state_quo);
-  Serial.print("  Set Jam: ");
-  Serial.print(state_set_jam);
-  Serial.print("switch seven segment: ");
-  Serial.print(state_switch_seven_segment);
-  Serial.print("  penjumlahan: ");
-  Serial.print(state_penjumlahan);
-  Serial.print("  pengurangan: ");
-  Serial.println(state_pengurangan);
+  else{
+    if (state_ganti_digit==1){
+      display_clock();
+      state_ganti_digit = 0;
+    }
+    
+    if(state_menit_detik==0){
+      digit1=0;
+      digit2=1;
+      digit3=2;
+      digit4=3;
+    } else{
+      digit1=2;
+      digit2=3;
+      digit3=4;
+      digit4=5;
+    }
+    
+    if (state_set_jam==1){
+      set_jam();
+    }
+
+    else if (state_quo==1){
+      if (state_ganti_clock==1){
+        setting_clock();
+        state_ganti_clock = 0;
+      }
+    }
+  }
 }

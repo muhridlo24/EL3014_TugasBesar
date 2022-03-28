@@ -20,7 +20,7 @@ int state_switch_seven_segment = 0;
 String prev_state;
 int segmen_kiri=0;
 unsigned long myTime;
-int temp_alarm=1;
+int temp_alarm=0;
 int state_start_pause=0;
 int state_quo=1;
 int state_set_jam=0;
@@ -384,19 +384,26 @@ void set_jam(int clock[]){
 }
 
 void alarm_on(){
-  if(counter_alarm%125==0 && counter_alarm!=0){
-    temp_alarm=!temp_alarm;
-    digitalWrite(buzzer,temp_alarm);
+  if(counter_alarm>0 && counter_alarm<=125){
+    digitalWrite(buzzer,HIGH);
   }
-    
-  if (counter_alarm==15625){
+  else if (125<counter_alarm && counter_alarm<=250){
     digitalWrite(buzzer,LOW);
+  }
+
+  if (counter_alarm==250){
+    temp_alarm++;
+
+    if(temp_alarm==10){
+      digitalWrite(buzzer,LOW);
+      temp_alarm=0;
+      state_alarm_on = 0;
+      alarm[0]=0;
+      alarm[1]=0;
+      alarm[2]=0;
+      alarm[3]=0;
+    }
     counter_alarm=0;
-    state_alarm_on = 0;
-    alarm[0]=0;
-    alarm[1]=0;
-    alarm[2]=0;
-    alarm[3]=0;
   }
 }
 
@@ -490,12 +497,12 @@ ISR(TIMER2_COMPA_vect){
       if (digitalRead(button1)==LOW){ //tekan button 1
         state_quo=1;
         state_quo_stopwatch=0;
-        state_switch_seven_segment=0;
       }
       else if (digitalRead(button2)==LOW){ //tekan button 2
         state_set_stopwatch=1;
         state_quo_stopwatch=0;
       }
+      state_menit_detik=0;
     }
     else if (state_set_stopwatch){
       if (digitalRead(button1)==LOW){ //tekan button 1
@@ -507,6 +514,7 @@ ISR(TIMER2_COMPA_vect){
       }
     }
   }
+
   if (abs(clock[0]-alarm[0])==0 && abs(clock[1]-alarm[1])==0 && abs(clock[2]-alarm[2])==0 && abs(clock[3]-alarm[3])==0 && state_alarm_on==1){  
     counter_alarm++;
   }

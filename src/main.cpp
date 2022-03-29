@@ -503,7 +503,8 @@ ISR(TIMER2_COMPA_vect){
       }
       else if (digitalRead(button2)==LOW){ //tekan button 2
         state_set_stopwatch=1;
-        state_quo_stopwatch=0;
+        state_quo_stopwatch=0;  
+        counter_stopwatch=0;
       }
       state_menit_detik=0;
     }
@@ -513,15 +514,13 @@ ISR(TIMER2_COMPA_vect){
         state_set_stopwatch=0;
       }
       else if (digitalRead(button2)==LOW){ //tekan button2
-        counter_stopwatch=0;
         state_start_pause=!state_start_pause;
-      }
-      if (state_start_pause){
-        counter_stopwatch++;
       }
     }
   }
-
+  if (state_start_pause){
+    counter_stopwatch++;
+  }
   if (abs(clock[0]-alarm[0])==0 && abs(clock[1]-alarm[1])==0 && abs(clock[2]-alarm[2])==0 && abs(clock[3]-alarm[3])==0 && state_alarm_on==1){  
     counter_alarm++;
   }
@@ -530,7 +529,7 @@ ISR(TIMER2_COMPA_vect){
     counter_stopwatch=0;
   }
   if (counter==625){
-    if (state_quo==1 || state_start_pause==1){
+    if (state_set_jam!=1){
       state_ganti_clock = 1;    
     }
     counter=0;
@@ -603,9 +602,4 @@ void loop(){
       set_jam(alarm);
     }
   }
-  Serial.print("quo stopwatch: "); Serial.print(state_quo_stopwatch); 
-  Serial.print("  set stopwatch: "); Serial.print(state_set_stopwatch); 
-  Serial.print("  start/pause: "); Serial.print(state_start_pause); 
-  Serial.print("  ganti clock: "); Serial.print(state_ganti_clock_stopwatch); 
-  Serial.print("  counter stopwatch: "); Serial.println(counter_stopwatch); 
 }

@@ -1,4 +1,14 @@
 #include <Arduino.h>
+#include <LiquidCrystal_I2C.h> 
+#include <Wire.h> // memasukan library i2c
+#include <Adafruit_SSD1306.h> // memasukan library LCD OLED SSD1306
+#define OLED_RESET 4
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+// default address 0x27 
+// tipe LCD 16x2 (16,2)
+LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2); 
 
 int COM=14,counter=0;
 int clock[6] = {0,0,0,0,0,0};
@@ -67,6 +77,15 @@ void setup(){
   pinMode(15,OUTPUT);
   pinMode(16,OUTPUT);
   pinMode(17,OUTPUT);
+
+  //Inisialisasi LCD
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+
+  //Inisialisasi OLED
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
 
   //STOPWATCH 2 (15,625 kHz dan prescaler 1024)
   cli();
@@ -593,4 +612,78 @@ void loop(){
       set_jam(alarm);
     }
   }
+  String tombol1;
+  String tombol2;
+  String tombol3;
+  String tombol4;
+  //Cetak ke Display LCD
+  lcd.clear();
+  lcd.setCursor(7,0);
+  lcd.print("MODE");
+  //Cetak ke Display OLED
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(56,0);
+  display.println("Menu-menu Tombol");
+  if (state_quo){
+    lcd.setCursor(5,1);
+    lcd.print("Jam Quo");
+    tombol1="Tombol 1: mode menit detik";
+    tombol2="Tombol 2: mode set jam";
+    tombol3="Tombol 3: mode set alarm";
+    tombol4="Tombol 4: mode stopwatch quo";
+  }
+  else if (state_set_jam){
+    lcd.setCursor(5,1);
+    lcd.print("Set Jam");
+    tombol1="Tombol 1: mode jam quo";
+    tombol2="Tombol 2: switch seven segment";
+    tombol3="Tombol 3: penjumlahan";
+    tombol4="Tombol 4: pengurangan";
+  }
+  else if (state_alarm){
+    lcd.setCursor(4,1);
+    lcd.print("Set Alarm");
+    tombol1="Tombol 1: mode jam quo";
+    tombol2="Tombol 2: switch seven segment";
+    tombol3="Tombol 3: penjumlahan";
+    tombol4="Tombol 4: pengurangan";
+  }
+  else if (state_quo_stopwatch){
+    lcd.setCursor(2,1);
+    lcd.print("Stopwatch Quo");
+    tombol1="Tombol 1: mode jam quo";
+    tombol2="Tombol 2: mode set stopwatch";
+    tombol3="Tombol 3: -";
+    tombol4="Tombol 4: -";
+  }
+  else if (state_set_stopwatch){
+    lcd.setCursor(2,1);
+    lcd.print("Set Stopwatch");
+    tombol1="Tombol 1: reset / mode stopwatch quo";
+    tombol2="Tombol 2: start / pause";
+    tombol3="Tombol 3: -";
+    tombol4="Tombol 4: -";
+  }
+  //Tombol 1
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,8);
+  display.print(tombol1);
+  //Tombol 2
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,16);
+  display.print(tombol2);
+  //Tombol 3
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,24);
+  display.print(tombol3);
+  //Tombol 4
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,32);
+  display.print(tombol4);
 }

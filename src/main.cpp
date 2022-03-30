@@ -1,8 +1,12 @@
 #include <Arduino.h>
 
+//variabel COM untuk mengaktifkan Seven Segment, nilai COM akan berubah dari 14 sampai 17  
 int COM=14,counter=0;
+//variabel clock untuk menyimpan HH:MM:SS pada jam digital biasa
 int clock[6] = {0,0,0,0,0,0};
+//variabel alarm untuk menyimpan clock alarm
 int alarm[6] = {0,0,0,0};
+//variabel clock untuk menyimpan MM:SS pada stopwatch
 int clock_stopwatch[4] = {0,0,0,0};
 int state_menit_detik = 0;
 int digit1;

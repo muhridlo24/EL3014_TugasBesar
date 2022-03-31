@@ -73,7 +73,6 @@ void setup(){
   pinMode(15,OUTPUT);
   pinMode(16,OUTPUT);
   pinMode(17,OUTPUT);
-  Serial.begin(9600);
 
   //STOPWATCH 2 (15,625 kHz dan prescaler 1024)
   cli();
@@ -272,7 +271,7 @@ void setting_stopwatch(){
       clock_stopwatch[2]=5;
       clock_stopwatch[3]=9;
     }
-    else if(clock[1]==9){
+    else if(clock_stopwatch[1]==9){
       clock_stopwatch[0]++;
       clock_stopwatch[1]=0;
       clock_stopwatch[2]=0;
@@ -561,11 +560,9 @@ void loop(){
       clock_stopwatch[3]=0;
     }
     if (state_set_stopwatch){
-      if (state_start_pause){
-        if (state_ganti_clock_stopwatch){
-          setting_stopwatch();
-          state_ganti_clock_stopwatch=0;
-        }
+      if (state_start_pause && state_ganti_clock_stopwatch){
+		setting_stopwatch();
+		state_ganti_clock_stopwatch=0;
       }
     }
   }
@@ -587,7 +584,8 @@ void loop(){
       digit2=1;
       digit3=2;
       digit4=3;
-    } else{
+    }
+	else{
       digit1=2;
       digit2=3;
       digit3=4;

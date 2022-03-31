@@ -12,4 +12,4 @@ Oleh:
 <li>Pada mode Stopwatch, jam dapat mengatur waktu stopwatch dalam format Jam:Menit. </li>
 
 <p><br><br>Link Dokumentasi: https://drive.google.com/drive/folders/19J1TsfJ3neVyEB4Y4fIVZkhwrlKgfWne?usp=sharing></p>
-<p><br><br>Link Dokumentasi: https://www.youtube.com/watch?v=UY2Wyn1SB3E></p>
+<p>Link Dokumentasi: https://www.youtube.com/watch?v=UY2Wyn1SB3E</p>
